@@ -1,0 +1,22 @@
+# Arquivos locais do Android Studio e do Gradle
+.idea/
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+.DS_Store
+Thumbs.db
+
+# Credenciais e configuracoes privadas
+google-services.json
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+
+# O APK para entrega fica versionado em apk/.
