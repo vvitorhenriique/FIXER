@@ -27,12 +27,18 @@ private val LightColorScheme = lightColorScheme(
     tertiary = BlueTertiary,
     background = BackgroundApp,
     surface = Color.White,
-    onPrimary = Color.White
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFEAF2FF),
+    onPrimaryContainer = Color(0xFF103477),
+    secondaryContainer = Color(0xFFEAF2FF),
+    onSecondaryContainer = Color(0xFF103477),
+    onSurface = Color(0xFF172746),
+    onSurfaceVariant = Color(0xFF64748B)
 )
 
 @Composable
 fun ServicosAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

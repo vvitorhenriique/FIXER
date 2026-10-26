@@ -44,7 +44,8 @@ fun RegisterScreen(
         senha: String,
         tipo: String,
         categoria: String,
-        descricao: String
+        descricao: String,
+        telefone: String
     ) -> Unit,
     onJaTenhoConta: () -> Unit = {},
     enviando: Boolean = false,
@@ -56,6 +57,7 @@ fun RegisterScreen(
     var tipo by rememberSaveable { mutableStateOf("Cliente") }
     var categoria by rememberSaveable { mutableStateOf("") }
     var descricao by rememberSaveable { mutableStateOf("") }
+    var telefone by rememberSaveable { mutableStateOf("") }
     var mostrarSenha by remember { mutableStateOf(false) }
     var menuAberto by remember { mutableStateOf(false) }
     var erroValidacao by remember { mutableStateOf<String?>(null) }
@@ -277,6 +279,20 @@ fun RegisterScreen(
                     shape = RoundedCornerShape(9.dp),
                     colors = coresCampo()
                 )
+                Spacer(Modifier.height(14.dp))
+                RotuloCampo("Telefone / WhatsApp (com DDD)")
+                OutlinedTextField(
+                    value = telefone,
+                    onValueChange = { telefone = it },
+                    enabled = !enviando,
+                    modifier = Modifier.fillMaxWidth().testTag("cadastro_telefone"),
+                    placeholder = { Text("(11) 99999-9999", fontSize = 12.sp) },
+                    supportingText = { Text("Este contato será exibido no seu perfil de prestador.") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = RoundedCornerShape(9.dp),
+                    colors = coresCampo()
+                )
             }
 
             Spacer(Modifier.height(18.dp))
@@ -290,9 +306,9 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     foco.clearFocus()
-                    erroValidacao = validarCadastro(nome, email, senha, tipo, categoria, descricao)
+                    erroValidacao = validarCadastro(nome, email, senha, tipo, categoria, descricao, telefone)
                     if (erroValidacao == null) {
-                        onFinalizar(nome.trim(), email.trim(), senha, tipo, categoria, descricao.trim())
+                        onFinalizar(nome.trim(), email.trim(), senha, tipo, categoria, descricao.trim(), telefone)
                     }
                 },
                 enabled = !enviando,

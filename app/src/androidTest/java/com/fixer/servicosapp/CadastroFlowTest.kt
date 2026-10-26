@@ -25,7 +25,12 @@ class CadastroFlowTest {
     }
 
     private fun abrirCadastro() {
-        tela.onNodeWithText("Começar").performClick()
+        if (tela.onAllNodesWithContentDescription("Sair da conta").fetchSemanticsNodes().isNotEmpty()) {
+            tela.onNodeWithContentDescription("Sair da conta").performClick()
+        }
+        if (tela.onAllNodesWithText("Começar").fetchSemanticsNodes().isNotEmpty()) {
+            tela.onNodeWithText("Começar").performClick()
+        }
         tela.onNodeWithText("Cadastre-se").performScrollTo().performClick()
     }
 
@@ -63,8 +68,9 @@ class CadastroFlowTest {
         tela.onNodeWithTag("login_senha").performScrollTo().performTextInput("teste123")
         tela.onNodeWithText("Entrar →").performScrollTo().performClick()
         tela.waitUntil(30_000) {
-            tela.onAllNodesWithText("Minha conta").fetchSemanticsNodes().isNotEmpty()
+            tela.onAllNodesWithTag("catalogo_lista").fetchSemanticsNodes().isNotEmpty()
         }
+        tela.onNodeWithContentDescription("Abrir minha conta").performClick()
         tela.onNodeWithText("Pessoa de Teste").assertIsDisplayed()
     }
 
@@ -76,6 +82,7 @@ class CadastroFlowTest {
         tela.onNodeWithText("Selecione uma categoria").performScrollTo().performClick()
         tela.onNodeWithText("Eletricista").performClick()
         tela.onNodeWithTag("cadastro_descricao").performScrollTo().performTextInput("Instalações e reparos residenciais")
+        tela.onNodeWithTag("cadastro_telefone").performScrollTo().performTextInput("11987654321")
         tela.onNodeWithText("Prestador").performScrollTo().performClick()
         tela.onNodeWithText("Finalizar cadastro").performScrollTo()
         capturar("cadastro-prestador.png")

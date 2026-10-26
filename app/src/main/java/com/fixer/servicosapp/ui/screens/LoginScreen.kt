@@ -31,7 +31,7 @@ private val CinzaFixer = Color(0xFF7B879B)
 
 @Composable
 fun LoginScreen (
-    onEntrar: (String, String) -> Unit = {_, _ -> },
+    onEntrar: (String, String, Boolean) -> Unit = {_, _, _ -> },
     onCadastrar: () -> Unit = {},
     onEsqueciSenha: () -> Unit = {},
     enviando: Boolean = false,
@@ -263,7 +263,7 @@ fun LoginScreen (
             }
             Button(
                 onClick = {
-                    onEntrar(email.trim(), senha)
+                    onEntrar(email.trim(), senha, lembrarDeMim)
                 },
                 enabled = !enviando,
                 modifier = Modifier

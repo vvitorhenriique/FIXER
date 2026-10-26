@@ -17,12 +17,13 @@ data class PerfilLocal(
     val email: String,
     val tipo: String,
     val categoria: String = "",
-    val descricao: String = ""
+    val descricao: String = "",
+    val telefone: String = ""
 )
 
 fun validarCadastro(
     nome: String, email: String, senha: String,
-    tipo: String, categoria: String, descricao: String
+    tipo: String, categoria: String, descricao: String, telefone: String = ""
 ): String? = when {
     nome.trim().length < 2 -> "Informe seu nome completo."
     !Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches() -> "Informe um e-mail válido."
@@ -30,6 +31,7 @@ fun validarCadastro(
     tipo !in listOf("Cliente", "Prestador") -> "Escolha Cliente ou Prestador."
     tipo == "Prestador" && categoria !in categoriasServico -> "Escolha a categoria do seu serviço."
     tipo == "Prestador" && descricao.isBlank() -> "Descreva brevemente o serviço que você oferece."
+    tipo == "Prestador" && normalizarTelefone(telefone) == null -> "Informe um telefone válido com DDD (10 ou 11 dígitos)."
     else -> null
 }
 
@@ -39,9 +41,9 @@ class CadastroLocal(context: Context, nomeArquivo: String = "cadastros_locais") 
 
     fun cadastrar(
         nome: String, email: String, senha: String,
-        tipo: String, categoria: String, descricao: String
+        tipo: String, categoria: String, descricao: String, telefone: String = ""
     ): Result<PerfilLocal> = runCatching {
-        validarCadastro(nome, email, senha, tipo, categoria, descricao)?.let {
+        validarCadastro(nome, email, senha, tipo, categoria, descricao, telefone)?.let {
             throw IllegalArgumentException(it)
         }
         val emailNormalizado = email.trim().lowercase(Locale.ROOT)
@@ -51,13 +53,15 @@ class CadastroLocal(context: Context, nomeArquivo: String = "cadastros_locais") 
             val perfil = PerfilLocal(
                 nome.trim(), emailNormalizado, tipo,
                 if (tipo == "Prestador") categoria else "",
-                if (tipo == "Prestador") descricao.trim() else ""
+                if (tipo == "Prestador") descricao.trim() else "",
+                if (tipo == "Prestador") normalizarTelefone(telefone).orEmpty() else ""
             )
             val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
             val registro = JSONObject()
                 .put("nome", perfil.nome).put("email", perfil.email)
                 .put("tipo", perfil.tipo).put("categoria", perfil.categoria)
                 .put("descricao", perfil.descricao)
+                .put("telefone", perfil.telefone)
                 .put("salt", Base64.getEncoder().encodeToString(salt))
                 .put("hash", Base64.getEncoder().encodeToString(derivarSenha(senha, salt)))
             check(preferencias.edit().putString(chave, registro.toString()).commit()) {
@@ -77,11 +81,50 @@ class CadastroLocal(context: Context, nomeArquivo: String = "cadastros_locais") 
         require(MessageDigest.isEqual(hashEsperado, derivarSenha(senha, salt))) {
             "E-mail ou senha incorretos."
         }
-        PerfilLocal(
-            registro.getString("nome"), registro.getString("email"), registro.getString("tipo"),
-            registro.optString("categoria"), registro.optString("descricao")
-        )
+        lerPerfil(registro)
     }
+
+    fun obterPerfil(email: String): PerfilLocal? = preferencias.getString("conta:$email", null)
+        ?.let { runCatching { lerPerfil(JSONObject(it)) }.getOrNull() }
+
+    fun prestadores(): List<Prestador> = preferencias.all.entries
+        .filter { it.key.startsWith("conta:") }
+        .mapNotNull { (_, valor) ->
+            runCatching { lerPerfil(JSONObject(valor as String)) }.getOrNull()
+        }
+        .filter { it.tipo == "Prestador" }
+        .map { Prestador("local:${it.email}", it.nome, it.categoria, it.descricao, it.telefone) }
+        .sortedBy { textoDeBusca(it.nome) }
+
+    fun atualizarTelefone(email: String, telefone: String): Result<PerfilLocal> = runCatching {
+        val numero = requireNotNull(normalizarTelefone(telefone)) {
+            "Informe um telefone válido com DDD (10 ou 11 dígitos)."
+        }
+        synchronized(CadastroLocal::class.java) {
+            val chave = "conta:$email"
+            val registro = JSONObject(requireNotNull(preferencias.getString(chave, null)))
+            require(registro.getString("tipo") == "Prestador")
+            registro.put("telefone", numero)
+            check(preferencias.edit().putString(chave, registro.toString()).commit()) {
+                "Não foi possível salvar o contato. Tente novamente."
+            }
+            lerPerfil(registro)
+        }
+    }
+
+    fun emailDaSessao(): String? = preferencias.getString("sessao_email", null)
+        ?.takeIf { obterPerfil(it) != null }
+
+    fun manterSessao(email: String?) {
+        preferencias.edit().apply {
+            if (email == null) remove("sessao_email") else putString("sessao_email", email)
+        }.apply()
+    }
+
+    private fun lerPerfil(registro: JSONObject) = PerfilLocal(
+        registro.getString("nome"), registro.getString("email"), registro.getString("tipo"),
+        registro.optString("categoria"), registro.optString("descricao"), registro.optString("telefone")
+    )
 
     private fun derivarSenha(senha: String, salt: ByteArray): ByteArray {
         val especificacao = PBEKeySpec(senha.toCharArray(), salt, 120_000, 256)

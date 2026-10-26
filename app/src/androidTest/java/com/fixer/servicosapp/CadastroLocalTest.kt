@@ -40,12 +40,39 @@ class CadastroLocalTest {
     fun prestadorExigeCategoriaEDescricaoEClienteNaoGuardaEssesCampos() {
         assertTrue(cadastro.cadastrar("João Silva", "joao@example.com", "teste123", "Prestador", "", "").isFailure)
         assertTrue(cadastro.cadastrar("João Silva", "joao@example.com", "teste123", "Prestador", "Eletricista", " ").isFailure)
-        val prestador = cadastro.cadastrar("João Silva", "joao@example.com", "teste123", "Prestador", "Eletricista", "Instalações residenciais").getOrThrow()
+        assertTrue(cadastro.cadastrar("João Silva", "joao@example.com", "teste123", "Prestador", "Eletricista", "Instalações residenciais", "123").isFailure)
+        val prestador = cadastro.cadastrar("João Silva", "joao@example.com", "teste123", "Prestador", "Eletricista", "Instalações residenciais", "(11) 98765-4321").getOrThrow()
         assertEquals("Eletricista", prestador.categoria)
         assertEquals(prestador, cadastro.entrar("joao@example.com", "teste123").getOrThrow())
         val cliente = cadastro.cadastrar("Ana Silva", "ana@example.com", "teste123", "Cliente", "Eletricista", "Anterior").getOrThrow()
         assertEquals("", cliente.categoria)
         assertEquals("", cliente.descricao)
         assertTrue(cadastro.cadastrar("", "erro", "123", "Cliente", "", "").isFailure)
+    }
+
+    @Test
+    fun catalogoExibeSomentePrestadoresEAtualizaContatoSemAlterarSenha() {
+        cadastro.cadastrar("Cliente", "cliente@example.com", "teste123", "Cliente", "", "").getOrThrow()
+        cadastro.cadastrar("Profissional", "prof@example.com", "teste123", "Prestador", "Pintor", "Pintura", "11987654321").getOrThrow()
+        assertEquals(listOf("Profissional"), cadastro.prestadores().map { it.nome })
+        cadastro.atualizarTelefone("prof@example.com", "+55 (41) 98765-4321").getOrThrow()
+        assertEquals("41987654321", CadastroLocal(contexto, arquivo).prestadores().single().telefone)
+        assertEquals("41987654321", cadastro.entrar("prof@example.com", "teste123").getOrThrow().telefone)
+        assertTrue(cadastro.atualizarTelefone("prof@example.com", "123").isFailure)
+        cadastro.manterSessao("prof@example.com")
+        assertEquals("prof@example.com", CadastroLocal(contexto, arquivo).emailDaSessao())
+        cadastro.manterSessao(null)
+        assertNull(cadastro.emailDaSessao())
+    }
+
+    @Test
+    fun cadastroAntigoSemTelefoneContinuaAutenticando() {
+        cadastro.cadastrar("Profissional", "antigo@example.com", "teste123", "Prestador", "Pintor", "Pintura", "11987654321").getOrThrow()
+        val prefs = contexto.getSharedPreferences(arquivo, Context.MODE_PRIVATE)
+        val registro = org.json.JSONObject(prefs.getString("conta:antigo@example.com", null)!!)
+        registro.remove("telefone")
+        prefs.edit().putString("conta:antigo@example.com", registro.toString()).commit()
+        assertEquals("", cadastro.entrar("antigo@example.com", "teste123").getOrThrow().telefone)
+        assertEquals("", cadastro.prestadores().single().telefone)
     }
 }

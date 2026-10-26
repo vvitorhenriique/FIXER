@@ -1,4 +1,4 @@
-# Executar o FIXER
+# Executar o FIXER 1.1
 
 ## Android Studio
 
@@ -10,15 +10,15 @@
 
 Abrir somente a subpasta `app` pode causar o erro `Task 'prepareKotlinBuildScriptModel' not found in project ':app'`.
 
-## PowerShell
+## Gerar e instalar o APK
 
-Com o Java configurado, execute na raiz:
+Na raiz do projeto, com o Java configurado:
 
 ```powershell
 .\gradlew.bat :app:assembleDebug
 ```
 
-O APK gerado estará em `app/build/outputs/apk/debug/app-debug.apk`. Também há uma cópia para demonstração em `apk/FIXER.apk`.
+O APK estará em `app/build/outputs/apk/debug/app-debug.apk`. A cópia para entrega fica em `apk/FIXER.apk`.
 
 Com `adb` no PATH e o emulador iniciado:
 
@@ -27,14 +27,26 @@ adb -e install -r .\apk\FIXER.apk
 adb -e shell am start -n com.fixer.servicosapp/.MainActivity
 ```
 
-## Cadastro e login locais
+## Apresentar o fluxo completo
 
-Escolha **Cliente** ou **Prestador** e toque em **Finalizar cadastro** após preencher os campos. A senha precisa ter pelo menos seis caracteres. Prestadores informam também categoria e descrição.
+1. Toque em Começar e em Cadastre-se.
+2. Escolha Cliente ou Prestador. A senha deve ter pelo menos seis caracteres.
+3. Para Prestador, informe categoria, descrição e telefone com DDD. Use um número que você possa utilizar na apresentação.
+4. Finalize o cadastro e toque em Ir para login.
+5. Entre com o e-mail e a senha cadastrados. O app abrirá o catálogo.
+6. Pesquise por nome ou categoria, aplique os filtros e abra um profissional.
+7. Nos detalhes de um prestador com telefone, teste os botões WhatsApp e Ligar. A ligação apenas abre o discador.
+8. Acesse Minha conta para consultar os dados e atualizar o telefone de um prestador.
+9. Use Sair para encerrar a sessão. Com Lembrar de mim marcado no login, a sessão continua nas próximas aberturas do app.
 
-Após a confirmação, toque em **Ir para login** e use o mesmo e-mail e senha. Os dados continuam disponíveis após fechar e abrir o aplicativo. Desinstalar o app ou limpar seus dados apaga as contas locais.
+Os cinco perfis com selo Exemplo e suas notas são fictícios e não possuem telefone. Os botões de contato desses exemplos ficam desabilitados. Cadastre seu próprio prestador no mesmo aparelho para testar os contatos.
+
+## Dados locais
+
+As contas permanecem disponíveis após fechar o app. Prestadores locais aparecem no catálogo do mesmo aparelho, sem avaliações. Cadastros de versões anteriores continuam válidos; prestadores sem telefone podem adicioná-lo em Minha conta.
+
+Não há sincronização entre celulares. Desinstalar o aplicativo ou limpar seus dados apaga as contas locais. A recuperação de senha por e-mail ainda está em desenvolvimento.
 
 ## Firebase
 
-As dependências do Firebase estão declaradas, mas o cadastro e o login desta versão usam armazenamento local.
-
-O arquivo `app/google-services.json` é opcional para compilar a demonstração e não é versionado. Adicionar esse arquivo não muda automaticamente o cadastro local para autenticação online; essa integração é um trabalho separado.
+As dependências estão declaradas, mas o cadastro e o login desta versão usam armazenamento local. O arquivo `app/google-services.json` é opcional para compilar a demonstração e não é versionado. A autenticação online ainda precisa ser implementada.
